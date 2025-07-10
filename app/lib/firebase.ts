@@ -74,20 +74,26 @@ export const requestNotificationPermission = async () => {
   }
 }
 
-export const onMessageListener = (messagingInstance: any) => {
-  return new Promise((resolve, reject) => {
-    try {
-      if (!messagingInstance) {
-        console.log("Messaging not initialized, using mock listener")
-        // Return a mock promise that never resolves for preview
-        return
-      }
+export const onMessageListener = (messagingInstance: any, setNotifications: Function) => {
+  if (!messagingInstance) {
+    console.log("Messaging not initialized, cannot set up listener.")
+    return () => {}
+  }
 
-      onMessage(messagingInstance, (payload) => {
-        resolve(payload)
-      })
-    } catch (error) {
-      console.log("Message listener setup failed (expected in preview)")
+  const unsubscribe = onMessage(messagingInstance, (payload) => {
+    console.log("Received foreground message:", payload)
+    // Add new notification to state directly here
+    const newNotification = {
+      id: Date.now().toString(),
+      title: payload.notification?.title || "New Notification",
+      message: payload.notification?.body || "You have a new message",
+      type: "info", // Assuming all foreground messages are 'info' type for now
+      timestamp: new Date(),
+      acknowledged: false,
+      category: payload.data?.category || "General",
     }
+    setNotifications((prev: any) => [newNotification, ...prev])
   })
+
+  return unsubscribe
 }

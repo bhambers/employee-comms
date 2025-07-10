@@ -72,22 +72,7 @@ export default function EmployeeCommsApp() {
       setFcmToken(token);
 
       // Listen for foreground messages
-      unsubscribe = onMessageListener(messaging)
-        .then((payload: any) => {
-          console.log("Received foreground message:", payload);
-          // Add new notification to state
-          const newNotification: Notification = {
-            id: Date.now().toString(),
-            title: payload.notification?.title || "New Notification",
-            message: payload.notification?.body || "You have a new message",
-            type: "info",
-            timestamp: new Date(),
-            acknowledged: false,
-            category: payload.data?.category || "General",
-          };
-          setNotifications((prev) => [newNotification, ...prev]);
-        })
-        .catch((err) => console.log("Failed to receive message:", err));
+      unsubscribe = onMessageListener(messaging, setNotifications);
     };
 
     setupFirebaseMessaging();
