@@ -25,40 +25,41 @@ interface Notification {
 
 export default function EmployeeCommsApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "Ingredient Substitution Required",
-      message: "Allergen alert: Replace peanut oil with sunflower oil in Recipe #247",
-      type: "urgent",
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      acknowledged: false,
-      category: "Safety",
-    },
-    {
-      id: "2",
-      title: "Shift Schedule Update",
-      message: "Your shift on Friday has been moved to 2 PM - 10 PM",
-      type: "info",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      acknowledged: true,
-      category: "Schedule",
-    },
-    {
-      id: "3",
-      title: "Equipment Maintenance",
-      message: "Oven #3 will be offline for maintenance from 3-5 PM today",
-      type: "warning",
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      acknowledged: false,
-      category: "Operations",
-    },
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([])
 
   const [emailNotifications, setEmailNotifications] = useState("daily")
   const [pushNotifications, setPushNotifications] = useState(true)
 
   useEffect(() => {
+    setNotifications([
+      {
+        id: "1",
+        title: "Ingredient Substitution Required",
+        message: "Allergen alert: Replace peanut oil with sunflower oil in Recipe #247",
+        type: "urgent",
+        timestamp: new Date(Date.now() - 30 * 60 * 1000),
+        acknowledged: false,
+        category: "Safety",
+      },
+      {
+        id: "2",
+        title: "Shift Schedule Update",
+        message: "Your shift on Friday has been moved to 2 PM - 10 PM",
+        type: "info",
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        acknowledged: true,
+        category: "Schedule",
+      },
+      {
+        id: "3",
+        title: "Equipment Maintenance",
+        message: "Oven #3 will be offline for maintenance from 3-5 PM today",
+        type: "warning",
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        acknowledged: false,
+        category: "Operations",
+      },
+    ])
     // Initialize Firebase
     initializeFirebase()
 
