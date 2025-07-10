@@ -30,6 +30,7 @@ export default function EmployeeCommsApp() {
   const [emailNotifications, setEmailNotifications] = useState("daily")
   const [pushNotifications, setPushNotifications] = useState(true)
   const [fcmToken, setFcmToken] = useState<string | null>(null)
+  const [selectedRole, setSelectedRole] = useState<string | null>(null)
 
   useEffect(() => {
     setNotifications([
@@ -369,10 +370,27 @@ export default function EmployeeCommsApp() {
                       onCheckedChange={setPushNotifications}
                     />
                   </div>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="role-selection">Send to Role</Label>
+                    <Select value={selectedRole || ""} onValueChange={setSelectedRole}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue placeholder="Select Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   {fcmToken && (
                     <Button
                       className="w-full"
                       onClick={async () => {
+                        const notificationTitle = "Test Notification";
+                        const notificationBody = "This is a test from the app!";
+
                         await fetch("/api/send-notification", {
                           method: "POST",
                           headers: {
@@ -380,10 +398,25 @@ export default function EmployeeCommsApp() {
                           },
                           body: JSON.stringify({
                             token: fcmToken,
-                            title: "Test Notification",
-                            body: "This is a test from the app!",
+                            title: notificationTitle,
+                            body: notificationBody,
+                            role: selectedRole, // Pass the selected role
                           }),
-                        })
+                        });
+
+                        // Manually add the notification to the state to simulate foreground receipt
+                        setNotifications((prev) => [
+                          {
+                            id: Date.now().toString(),
+                            title: notificationTitle,
+                            message: notificationBody,
+                            type: "info", // Assuming test notifications are 'info' type
+                            timestamp: new Date(),
+                            acknowledged: false,
+                            category: "Test", // Assign a category for test notifications
+                          },
+                          ...prev,
+                        ]);
                       }}
                     >
                       Send Test Notification

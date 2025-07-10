@@ -11,12 +11,14 @@ if (!admin.apps.length) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { token, title, body, data } = await request.json()
+    const { token, title, body, data, role } = await request.json()
 
     if (!token || !title || !body) {
       return NextResponse.json({ error: "Token, title, and body are required" }, { status: 400 })
     }
 
+    // In a real application, you would fetch FCM tokens based on the 'role' here.
+    // For this test, we'll still use the provided 'token'.
     const message = {
       token: token,
       notification: {
@@ -25,6 +27,8 @@ export async function POST(request: NextRequest) {
       },
       data: data || {},
     }
+
+    console.log(admin);
 
     const response = await admin.messaging().send(message)
     console.log("Successfully sent message:", response)
