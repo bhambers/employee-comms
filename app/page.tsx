@@ -102,7 +102,7 @@ export default function EmployeeCommsApp() {
     { icon: Bell, label: "Dashboard", active: true },
     { icon: Bell, label: "Notifications", active: false },
     { icon: MessageSquare, label: "Analytics", active: false },
-    { icon: Users, label: "Users", active: false },
+    { icon: Users, label: "Social", active: false },
     { icon: Settings, label: "Settings", active: false },
     { icon: HelpCircle, label: "Help & Support", active: false },
     { icon: User, label: "Profile", active: false },
@@ -278,42 +278,8 @@ export default function EmployeeCommsApp() {
                 </div>
               </div>
 
-              {/* Notification Preferences */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
-                  <CardDescription>Customize how you receive notifications across various categories.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="email-notifications">Email Notifications</Label>
-                    <Select value={emailNotifications} onValueChange={setEmailNotifications}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="daily">Daily Digest</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="push-notifications">Push Notifications</Label>
-                    <Switch
-                      id="push-notifications"
-                      checked={pushNotifications}
-                      onCheckedChange={setPushNotifications}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column - Recent Activity */}
-            <div className="space-y-6">
-              <Card>
+              {/* Recent Activity  */}
+<Card>
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
@@ -365,6 +331,41 @@ export default function EmployeeCommsApp() {
                   ))}
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Right Column - Notification Preferences */}
+            <div className="space-y-6">
+                <Card>
+                <CardHeader>
+                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardDescription>Customize how you receive failover notification, across various categories.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="email-notifications">Email Notifications</Label>
+                    <Select value={emailNotifications} onValueChange={setEmailNotifications}>
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">Daily Digest</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="never">Never</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="push-notifications">Push Notifications</Label>
+                    <Switch
+                      id="push-notifications"
+                      checked={pushNotifications}
+                      onCheckedChange={setPushNotifications}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
 
               {/* Featured Updates */}
               <Card>
