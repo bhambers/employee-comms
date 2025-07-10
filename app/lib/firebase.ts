@@ -57,32 +57,33 @@ export const requestNotificationPermission = async () => {
             body: JSON.stringify({ token }),
           })
 
-          return token
+          return { token, messaging }
         } catch (tokenError) {
           console.log("Token generation failed (expected in preview):", tokenError)
-          return "mock-token-for-preview"
+          return { token: "mock-token-for-preview", messaging: null }
         }
       } else {
         console.log("Notification permission denied")
-        return null
+        return { token: null, messaging: null }
       }
     }
+    return { token: null, messaging: null } // Fallback if serviceWorker is not in navigator
   } catch (error) {
     console.log("Notification setup failed (expected in preview):", error)
-    return "mock-token-for-preview"
+    return { token: "mock-token-for-preview", messaging: null }
   }
 }
 
-export const onMessageListener = () => {
+export const onMessageListener = (messagingInstance: any) => {
   return new Promise((resolve, reject) => {
     try {
-      if (!messaging) {
+      if (!messagingInstance) {
         console.log("Messaging not initialized, using mock listener")
         // Return a mock promise that never resolves for preview
         return
       }
 
-      onMessage(messaging, (payload) => {
+      onMessage(messagingInstance, (payload) => {
         resolve(payload)
       })
     } catch (error) {

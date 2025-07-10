@@ -32,68 +32,71 @@ export default function EmployeeCommsApp() {
   const [fcmToken, setFcmToken] = useState<string | null>(null)
 
   useEffect(() => {
-    setNotifications([
-      {
-        id: "1",
-        title: "Ingredient Substitution Required",
-        message: "Allergen alert: Replace peanut oil with sunflower oil in Recipe #247",
-        type: "urgent",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000),
-        acknowledged: false,
-        category: "Safety",
-      },
-      {
-        id: "2",
-        title: "Shift Schedule Update",
-        message: "Your shift on Friday has been moved to 2 PM - 10 PM",
-        type: "info",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        acknowledged: true,
-        category: "Schedule",
-      },
-      {
-        id: "3",
-        title: "Equipment Maintenance",
-        message: "Oven #3 will be offline for maintenance from 3-5 PM today",
-        type: "warning",
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        acknowledged: false,
-        category: "Operations",
-      },
-    ])
-    // Initialize Firebase
-    initializeFirebase()
+    let unsubscribe: (() => void) | undefined; // Declare unsubscribe in the outer scope
 
-    // Request notification permission and get token
-    const getToken = async () => {
-      const token = await requestNotificationPermission()
-      setFcmToken(token)
-    }
-    getToken()
-
-    // Listen for foreground messages
-    const unsubscribe = onMessageListener()
-      .then((payload: any) => {
-        console.log("Received foreground message:", payload)
-        // Add new notification to state
-        const newNotification: Notification = {
-          id: Date.now().toString(),
-          title: payload.notification?.title || "New Notification",
-          message: payload.notification?.body || "You have a new message",
-          type: "info",
-          timestamp: new Date(),
+    const setupFirebaseMessaging = async () => {
+      setNotifications([
+        {
+          id: "1",
+          title: "Ingredient Substitution Required",
+          message: "Allergen alert: Replace peanut oil with sunflower oil in Recipe #247",
+          type: "urgent",
+          timestamp: new Date(Date.now() - 30 * 60 * 1000),
           acknowledged: false,
-          category: payload.data?.category || "General",
-        }
-        setNotifications((prev) => [newNotification, ...prev])
-      })
-      .catch((err) => console.log("Failed to receive message:", err))
+          category: "Safety",
+        },
+        {
+          id: "2",
+          title: "Shift Schedule Update",
+          message: "Your shift on Friday has been moved to 2 PM - 10 PM",
+          type: "info",
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          acknowledged: true,
+          category: "Schedule",
+        },
+        {
+          id: "3",
+          title: "Equipment Maintenance",
+          message: "Oven #3 will be offline for maintenance from 3-5 PM today",
+          type: "warning",
+          timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+          acknowledged: false,
+          category: "Operations",
+        },
+      ]);
+      // Initialize Firebase
+      initializeFirebase();
+
+      // Request notification permission and get token
+      const { token, messaging } = await requestNotificationPermission();
+      setFcmToken(token);
+
+      // Listen for foreground messages
+      unsubscribe = onMessageListener(messaging)
+        .then((payload: any) => {
+          console.log("Received foreground message:", payload);
+          // Add new notification to state
+          const newNotification: Notification = {
+            id: Date.now().toString(),
+            title: payload.notification?.title || "New Notification",
+            message: payload.notification?.body || "You have a new message",
+            type: "info",
+            timestamp: new Date(),
+            acknowledged: false,
+            category: payload.data?.category || "General",
+          };
+          setNotifications((prev) => [newNotification, ...prev]);
+        })
+        .catch((err) => console.log("Failed to receive message:", err));
+    };
+
+    setupFirebaseMessaging();
 
     return () => {
       if (typeof unsubscribe === "function") {
-        unsubscribe()
+        unsubscribe();
       }
-    }
+    };
   }, [])
 
   const acknowledgeNotification = (id: string) => {
