@@ -1,21 +1,35 @@
 import { type NextRequest, NextResponse } from "next/server"
+import * as admin from "firebase-admin"
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS!)
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, body, token, data } = await request.json()
+    const { token, title, body, data } = await request.json()
 
-    if (!title || !body || !token) {
-      return NextResponse.json({ error: "Title, body, and token are required" }, { status: 400 })
+    if (!token || !title || !body) {
+      return NextResponse.json({ error: "Token, title, and body are required" }, { status: 400 })
     }
 
-    // Mock successful response for preview
-    console.log("Mock notification sent:", { title, body, token, data })
+    const message = {
+      token: token,
+      notification: {
+        title: title,
+        body: body,
+      },
+      data: data || {},
+    }
 
-    return NextResponse.json({
-      success: true,
-      messageId: `mock-message-${Date.now()}`,
-      message: "Notification sent successfully (mock)",
-    })
+    const response = await admin.messaging().send(message)
+    console.log("Successfully sent message:", response)
+
+    return NextResponse.json({ success: true, messageId: response })
   } catch (error) {
     console.error("Error sending notification:", error)
     return NextResponse.json({ error: "Failed to send notification" }, { status: 500 })

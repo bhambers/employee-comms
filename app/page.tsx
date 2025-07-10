@@ -29,6 +29,7 @@ export default function EmployeeCommsApp() {
 
   const [emailNotifications, setEmailNotifications] = useState("daily")
   const [pushNotifications, setPushNotifications] = useState(true)
+  const [fcmToken, setFcmToken] = useState<string | null>(null)
 
   useEffect(() => {
     setNotifications([
@@ -63,8 +64,12 @@ export default function EmployeeCommsApp() {
     // Initialize Firebase
     initializeFirebase()
 
-    // Request notification permission
-    requestNotificationPermission()
+    // Request notification permission and get token
+    const getToken = async () => {
+      const token = await requestNotificationPermission()
+      setFcmToken(token)
+    }
+    getToken()
 
     // Listen for foreground messages
     const unsubscribe = onMessageListener()
@@ -125,7 +130,7 @@ export default function EmployeeCommsApp() {
             <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
               <Bell className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-lg">NotifyFlow</span>
+            <span className="font-semibold text-lg">The Pushy Pals</span>
           </div>
           <Button variant="ghost" size="sm" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
             <X className="w-4 h-4" />
@@ -280,7 +285,7 @@ export default function EmployeeCommsApp() {
               </div>
 
               {/* Recent Activity  */}
-<Card>
+              <Card>
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
@@ -364,6 +369,26 @@ export default function EmployeeCommsApp() {
                       onCheckedChange={setPushNotifications}
                     />
                   </div>
+                  {fcmToken && (
+                    <Button
+                      className="w-full"
+                      onClick={async () => {
+                        await fetch("/api/send-notification", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            token: fcmToken,
+                            title: "Test Notification",
+                            body: "This is a test from the app!",
+                          }),
+                        })
+                      }}
+                    >
+                      Send Test Notification
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
               

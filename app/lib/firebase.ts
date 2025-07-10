@@ -48,8 +48,15 @@ export const requestNotificationPermission = async () => {
           })
           console.log("FCM Token:", token)
 
-          // Mock the token save for preview
-          console.log("Token would be saved to server")
+          // Save the token to your server
+          await fetch("/api/save-token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+          })
+
           return token
         } catch (tokenError) {
           console.log("Token generation failed (expected in preview):", tokenError)
