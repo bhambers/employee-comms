@@ -200,8 +200,8 @@ export default function EmployeeCommsApp() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token: fcmToken,
-        title: "Test Notification",
-        body: "This is a test from the app!",
+        title: "Ingredient Substitution Required",
+        body: "Allergen alert: Replace olive oil with sunflower oil in Recipe 93000001. It may contain peanut.",
       }),
     })
   }
