@@ -22,6 +22,23 @@ The Employee Communications Platform is a modern, real-time application designed
 - **Push Notifications:** [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging)
 - **Package Manager:** [pnpm](https://pnpm.io/)
 
+## Firebase Integration
+
+This project relies on Google Firebase for its real-time notification capabilities. The following packages are used:
+
+- `firebase`: The client-side SDK for interacting with Firebase services in the browser.
+- `firebase-admin`: The server-side SDK used for administrative tasks, such as sending notifications from the backend.
+
+### Key Integration Points:
+
+- **Firebase Initialization and Messaging:**
+  - `app/lib/firebase.ts`: Contains the core logic for initializing the Firebase client, requesting notification permissions, and handling incoming messages.
+  - `app/page.tsx`: Initializes the Firebase messaging service and listens for new notifications to display in the UI.
+  - `public/firebase-messaging-sw.js`: The service worker responsible for handling background push notifications.
+
+- **Sending Notifications (Server-Side):**
+  - `app/api/send-notification/route.ts`: An API route that uses the `firebase-admin` SDK to send push notifications to registered devices.
+
 ## Environment Setup
 
 To run this application, you need to configure your Firebase environment variables. Create a `.env.local` file in the project root and add your Firebase project credentials:
