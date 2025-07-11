@@ -5,7 +5,6 @@ import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -17,6 +16,7 @@ interface NotificationModalProps {
   notification: {
     title: string
     message: string
+    timestamp: Date
   } | null
   onConfirm: () => void
 }
@@ -27,8 +27,15 @@ export function NotificationModal({ open, onOpenChange, notification, onConfirm 
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{notification?.title}</AlertDialogTitle>
-          <AlertDialogDescription>{notification?.message}</AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="text-sm text-muted-foreground">
+          <p>{notification?.message}</p>
+          {notification?.timestamp && (
+            <p className="text-xs text-gray-500 mt-2">
+              {notification.timestamp.toLocaleString()}
+            </p>
+          )}
+        </div>
         <AlertDialogFooter>
           <AlertDialogAction onClick={onConfirm}>OK</AlertDialogAction>
         </AlertDialogFooter>

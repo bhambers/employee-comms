@@ -4,13 +4,14 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Bell, MessageSquare, AlertTriangle, Users, Settings, HelpCircle, User, Search, Menu, X } from "lucide-react"
+import { Bell, MessageSquare, AlertTriangle, Users, Settings, HelpCircle, User, Search, Menu, X, Flame, Info, ShieldAlert } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Checkbox } from "@/components/ui/checkbox"
 import { initializeFirebase, requestNotificationPermission, onMessageListener } from "./lib/firebase"
 import { NotificationModal } from "./components/NotificationModal"
 
@@ -18,10 +19,30 @@ interface Notification {
   id: string
   title: string
   message: string
-  type: "urgent" | "info" | "warning"
+  type: "urgent" | "info" | "warning" | "critical"
   timestamp: Date
   acknowledged: boolean
   category: string
+  details?: {
+    // Fields for product withdrawal
+    product?: string
+    issue?: string
+    locations?: string
+    dateIdentified?: Date
+    actionRequiredBy?: Date
+    helpLink?: string
+    consequences?: string
+    actionRequired?: string[]
+
+    // Fields for travel disruption
+    incident?: string
+    impact?: string
+
+    // Fields for escalation
+    escalated?: boolean
+    escalationTime?: Date
+    escalatedTo?: string
+  }
 }
 
 export default function EmployeeCommsApp() {
@@ -33,12 +54,74 @@ export default function EmployeeCommsApp() {
   const [emailNotifications, setEmailNotifications] = useState("daily")
   const [pushNotifications, setPushNotifications] = useState(true)
   const [fcmToken, setFcmToken] = useState<string | null>(null)
+  const [criticalActionItems, setCriticalActionItems] = useState<Record<string, boolean>>({
+    "Remove all affected stock immediately and dispose of as per process.": false,
+    "Confirm withdrawal and disposal via proper process by 12/07/2025 17:00 using the button below.": false,
+  })
+  const [countdown, setCountdown] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      notifications.forEach((n) => {
+        if (n.details?.escalationTime) {
+          const now = new Date().getTime()
+          const distance = n.details.escalationTime.getTime() - now
+          if (distance > 0) {
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+            setCountdown((prev) => ({ ...prev, [n.id]: `${hours}h ${minutes}m ${seconds}s` }))
+          } else {
+            setCountdown((prev) => ({ ...prev, [n.id]: "EXPIRED" }))
+          }
+        }
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [notifications])
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined
 
     const setupFirebaseMessaging = async () => {
       setNotifications([
+        {
+          id: "5",
+          title: "Travel Disruption – Expect Delays This Morning Getting to Site X",
+          message: "There has been an accident on the M6 motorway effecting travel times.",
+          type: "critical",
+          timestamp: new Date(Date.now() - 15 * 60 * 1000),
+          acknowledged: false,
+          category: "Travel Alert",
+          details: {
+            incident: "M6 closed near Warrington due to multi-vehicle accident.",
+            locations: "Site X",
+            impact: "Delays of up to 60 minutes expected. Please allow extra time for travel.",
+            actionRequired: ["None – for awareness only."],
+          },
+        },
+        {
+          id: "4",
+          title: "URGENT: Immediate Withdrawal of Gourmet Beef Pies – Action Required",
+          message: "Gourmet Beef Pies must be withdrawn from all locations due to potential undeclared allergen contamination (peanuts).",
+          type: "critical",
+          timestamp: new Date(),
+          acknowledged: false,
+          category: "Food Safety",
+          details: {
+            product: "Gourmet Beef Pies. SKU: 506000283456",
+            issue: "Allergen not declared: Peanuts",
+            locations: "All UK Stores",
+            dateIdentified: new Date("2025-07-12T09:00:00Z"),
+            actionRequiredBy: new Date("2025-07-12T17:00:00Z"),
+            helpLink: "/procedures/food-withdrawal",
+            consequences: "Customer/Colleague serious health risk.",
+            actionRequired: [
+              "Remove all affected stock immediately and dispose of as per process.",
+              "Confirm withdrawal and disposal via proper process by 12/07/2025 17:00 using the button below.",
+            ],
+          },
+        },
         {
           id: "1",
           title: "Ingredient Substitution Required",
@@ -47,6 +130,11 @@ export default function EmployeeCommsApp() {
           timestamp: new Date(Date.now() - 30 * 60 * 1000),
           acknowledged: false,
           category: "Safety",
+          details: {
+            escalated: true,
+            escalatedTo: "Jane Doe (Line Manager)",
+            escalationTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
         },
         {
           id: "2",
@@ -299,52 +387,141 @@ export default function EmployeeCommsApp() {
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="space-y-3">
-                      <div className="flex items-start space-x-3">
-                        <div
-                          className={`w-2 h-2 rounded-full mt-2 ${
-                            notification.type === "urgent"
-                              ? "bg-red-500"
-                              : notification.type === "warning"
-                                ? "bg-yellow-500"
-                                : "bg-blue-500"
-                          }`}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium truncate">{notification.title}</p>
-                            {!notification.acknowledged && (
-                              <Badge variant="destructive" className="ml-2">
-                                New
-                              </Badge>
+                <CardContent className="p-0">
+                  <div className="divide-y divide-gray-200">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-gray-50 transition-colors duration-150 ${
+                          notification.details?.incident ? "bg-orange-50 hover:bg-orange-100" : ""
+                        }`}
+                      >
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
+                            {notification.details?.incident ? (
+                              <AlertTriangle className="w-5 h-5 text-orange-500" />
+                            ) : (
+                              <>
+                                {notification.type === "critical" && <ShieldAlert className="w-5 h-5 text-purple-700" />}
+                                {notification.type === "urgent" && <Flame className="w-5 h-5 text-red-500" />}
+                                {notification.type === "warning" && <AlertTriangle className="w-5 h-5 text-yellow-500" />}
+                                {notification.type === "info" && <Info className="w-5 h-5 text-blue-500" />}
+                              </>
                             )}
                           </div>
-                          <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
-                          <div className="flex items-center justify-between mt-2">
-                            <p className="text-xs text-gray-500">
-                              {notification.timestamp.toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </p>
-                            {!notification.acknowledged && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => acknowledgeNotification(notification.id)}
-                                className="text-xs"
-                              >
-                                Acknowledge
-                              </Button>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-semibold text-gray-900 truncate">{notification.title}</p>
+                              <div className="flex items-center space-x-2">
+                                {!notification.acknowledged && (
+                                  <Badge variant="destructive" className="text-xs">
+                                    New
+                                  </Badge>
+                                )}
+                                <p className="text-xs text-gray-500">
+                                  {notification.timestamp.toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+
+                            {notification.details?.escalated && (
+                              <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <div className="flex items-center">
+                                  <AlertTriangle className="w-4 h-4 mr-2 text-red-600" />
+                                  <p className="text-xs font-semibold text-red-800">
+                                    Not actioned. Escalated to: {notification.details.escalatedTo}
+                                  </p>
+                                </div>
+                                <p className="text-xs text-red-700 mt-1">
+                                  Time remaining to action:{" "}
+                                  <span className="font-bold">{countdown[notification.id]}</span>
+                                </p>
+                              </div>
                             )}
+
+                            {notification.type === "critical" && notification.details && (
+                              <div className="text-xs text-gray-600 mt-2 space-y-1">
+                                {/* Product Withdrawal Details */}
+                                {notification.details.product && (
+                                  <>
+                                    <p><strong>Product:</strong> {notification.details.product}</p>
+                                    <p><strong>Issue:</strong> {notification.details.issue}</p>
+                                  </>
+                                )}
+
+                                {/* Travel Disruption Details */}
+                                {notification.details.incident && (
+                                  <p><strong>Incident:</strong> {notification.details.incident}</p>
+                                )}
+
+                                {/* Common Details */}
+                                {notification.details.locations && <p><strong>Location(s):</strong> {notification.details.locations}</p>}
+                                {notification.details.impact && <p><strong>Impact:</strong> {notification.details.impact}</p>}
+                                {notification.details.actionRequiredBy && <p><strong>Action Required By:</strong> {notification.details.actionRequiredBy?.toLocaleString()}</p>}
+
+                                {/* Action Required Section */}
+                                {notification.details.actionRequired && (
+                                  <div className="pt-2">
+                                    <p className="font-semibold">Action Required:</p>
+                                    {notification.details.actionRequired?.[0] === "None – for awareness only." ? (
+                                      <p>{notification.details.actionRequired?.[0]}</p>
+                                    ) : (
+                                      <div className="space-y-2 mt-1">
+                                        {notification.details.actionRequired?.map((action, i) => (
+                                          <div key={i} className="flex items-center space-x-2">
+                                            <Checkbox
+                                              id={`action-${notification.id}-${i}`}
+                                              checked={criticalActionItems[action]}
+                                              onCheckedChange={(checked) => {
+                                                setCriticalActionItems((prev) => ({ ...prev, [action]: !!checked }))
+                                              }}
+                                            />
+                                            <label
+                                              htmlFor={`action-${notification.id}-${i}`}
+                                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                            >
+                                              {action}
+                                            </label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Consequences and Help Link */}
+                                {notification.details.consequences && <p className="pt-2"><strong>Consequences of non-compliance:</strong> {notification.details.consequences}</p>}
+                                {notification.details.helpLink && (
+                                  <Button variant="link" className="text-xs p-0 h-auto text-orange-600" onClick={() => alert(`Redirecting to ${notification.details?.helpLink}`)}>
+                                    Refer to process and procedures for further guidance
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+
+                            <div className="mt-2">
+                              {!notification.acknowledged && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => acknowledgeNotification(notification.id)}
+                                  className="text-xs"
+                                >
+                                  Acknowledge
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <Separator />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
