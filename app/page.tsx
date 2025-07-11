@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { initializeFirebase, requestNotificationPermission, onMessageListener } from "./lib/firebase"
+import { NotificationModal } from "./components/NotificationModal"
 
 interface Notification {
   id: string
@@ -26,13 +27,15 @@ interface Notification {
 export default function EmployeeCommsApp() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [modalOpen, setModalOpen] = useState(false)
+  const [currentNotification, setCurrentNotification] = useState<Notification | null>(null)
 
   const [emailNotifications, setEmailNotifications] = useState("daily")
   const [pushNotifications, setPushNotifications] = useState(true)
   const [fcmToken, setFcmToken] = useState<string | null>(null)
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined; // Declare unsubscribe in the outer scope
+    let unsubscribe: (() => void) | undefined
 
     const setupFirebaseMessaging = async () => {
       setNotifications([
@@ -64,15 +67,19 @@ export default function EmployeeCommsApp() {
           category: "Operations",
         },
       ]);
-      // Initialize Firebase
       initializeFirebase();
 
-      // Request notification permission and get token
       const { token, messaging } = await requestNotificationPermission();
       setFcmToken(token);
 
-      // Listen for foreground messages
-      unsubscribe = onMessageListener(messaging, setNotifications);
+      const showModal = (notification: Notification) => {
+        setCurrentNotification(notification);
+        setModalOpen(true);
+      };
+
+      if (messaging) {
+        unsubscribe = onMessageListener(messaging, showModal);
+      }
     };
 
     setupFirebaseMessaging();
@@ -83,6 +90,21 @@ export default function EmployeeCommsApp() {
       }
     };
   }, [])
+
+  const addNotificationAndCloseModal = () => {
+    if (currentNotification) {
+      setNotifications((prev) => {
+        // Prevent duplicates
+        if (prev.some((n) => n.id === currentNotification.id)) {
+          return prev;
+        }
+        // Add the new notification, keeping acknowledged: false
+        return [currentNotification, ...prev];
+      });
+    }
+    setModalOpen(false);
+    setCurrentNotification(null);
+  };
 
   const acknowledgeNotification = (id: string) => {
     setNotifications((prev) => prev.map((notif) => (notif.id === id ? { ...notif, acknowledged: true } : notif)))
@@ -368,8 +390,8 @@ export default function EmployeeCommsApp() {
                           },
                           body: JSON.stringify({
                             token: fcmToken,
-                            title: "Test Notification",
-                            body: "This is a test from the app!",
+                            title: "Ingredient Substitution Required",
+                            body: "Allergen alert: Replace peanut oil with sunflower oil in Recipe 93000001",
                           }),
                         })
                       }}
@@ -439,6 +461,12 @@ export default function EmployeeCommsApp() {
           </div>
         </main>
       </div>
+      <NotificationModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        notification={currentNotification}
+        onConfirm={addNotificationAndCloseModal}
+      />
     </div>
   )
 }

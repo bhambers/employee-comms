@@ -74,7 +74,7 @@ export const requestNotificationPermission = async () => {
   }
 }
 
-export const onMessageListener = (messagingInstance: any, setNotifications: Function) => {
+export const onMessageListener = (messagingInstance: any, showModal: Function) => {
   if (!messagingInstance) {
     console.log("Messaging not initialized, cannot set up listener.")
     return () => {}
@@ -82,17 +82,16 @@ export const onMessageListener = (messagingInstance: any, setNotifications: Func
 
   const unsubscribe = onMessage(messagingInstance, (payload) => {
     console.log("Received foreground message:", payload)
-    // Add new notification to state directly here
     const newNotification = {
       id: Date.now().toString(),
       title: payload.notification?.title || "New Notification",
       message: payload.notification?.body || "You have a new message",
-      type: "info", // Assuming all foreground messages are 'info' type for now
+      type: "info", 
       timestamp: new Date(),
       acknowledged: false,
       category: payload.data?.category || "General",
     }
-    setNotifications((prev: any) => [newNotification, ...prev])
+    showModal(newNotification)
   })
 
   return unsubscribe
